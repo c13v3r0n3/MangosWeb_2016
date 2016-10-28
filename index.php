@@ -72,11 +72,11 @@ include('lang/' . $GLOBALS["user_cur_lang"] . '/common.php');
  ***************************************************************/
 require ('core/class.database.php');
 $DB = new Database(
-	$Config->getDbInfo('db_host'), 
-	$Config->getDbInfo('db_port'), 
-	$Config->getDbInfo('db_username'), 
-	$Config->getDbInfo('db_password'), 
-	$Config->getDbInfo('db_name')
+	$Config->getDbInfo('db_host'),
+	$Config->getDbInfo('db_username'),
+	$Config->getDbInfo('db_password'),
+	$Config->getDbInfo('db_name'),
+	$Config->getDbInfo('db_port')
 	);
 
 // Check the database status. 0 = cannot connect, 1 = success, 2 = DB doesnt exist
@@ -85,7 +85,7 @@ if($DB->status() != 1)
 	echo "Cannot connect to the Realm database. Please make sure you have run the installer to properly set the DB info in the database.";
 	die();
 }
-	
+
 // Make an array from `dbinfo` column for the selected realm..
 $DB_info = $DB->selectRow("SELECT * FROM realmlist WHERE id='".$GLOBALS['cur_selected_realm']."'");
 $dbinfo = explode(';', $DB_info['dbinfo']);
@@ -94,54 +94,54 @@ $dbinfo = explode(';', $DB_info['dbinfo']);
 // world_host;world_port;world_username;world_pass;worldDBname
 $Realm_DB_Info = array(
 	'char_db_host' => $dbinfo['0'], // char host
-	'char_db_port' => $dbinfo['1'], // char port
-	'char_db_username' => $dbinfo['2'], // char user
-	'char_db_password' => $dbinfo['3'], // char password
-	'char_db_name' => $dbinfo['4'], //char db name
+	'char_db_username' => $dbinfo['1'], // char user
+	'char_db_password' => $dbinfo['2'], // char password
+	'char_db_name' => $dbinfo['3'], //char db name
+	'char_db_port' => $dbinfo['4'], // char port
 	'w_db_host' => $dbinfo['5'], // world host
-	'w_db_port' => $dbinfo['6'], // world port
-	'w_db_username' => $dbinfo['7'], // world user
-	'w_db_password' => $dbinfo['8'], // world password
-	'w_db_name' => $dbinfo['9'], // world db name
+	'w_db_username' => $dbinfo['6'], // world user
+	'w_db_password' => $dbinfo['7'], // world password
+	'w_db_name' => $dbinfo['8'], // world db name
+	'w_db_port' => $dbinfo['9'], // world port
 	);
 
 // Free up memory.
-unset($dbinfo, $DB_info); 
+unset($dbinfo, $DB_info);
 
 // === Establish the Character DB connection === //
 $CDB = new Database(
 	$Realm_DB_Info['char_db_host'],
-	$Realm_DB_Info['char_db_port'],
 	$Realm_DB_Info['char_db_username'],
 	$Realm_DB_Info['char_db_password'],
-	$Realm_DB_Info['char_db_name']
+	$Realm_DB_Info['char_db_name'],
+	$Realm_DB_Info['char_db_port']
 	);
 
 // Check the CDB status. 0 = cannot connect, 1 = success, 2 = DB doesnt exist
 if($CDB->status() != 1)
 {
-	echo "Cannot connect to the Character database. Please make sure you have this realm setup successfully in the Admin Panel. 
+	echo "Cannot connect to the Character database. Please make sure you have this realm setup successfully in the Admin Panel.
 	Delete your cookies to reset realm selection back to default";
 	die();
 }
-	
-// === Establish the World DB connection === //	
+
+// === Establish the World DB connection === //
 $WDB = new Database(
 	$Realm_DB_Info['w_db_host'],
-	$Realm_DB_Info['w_db_port'],
 	$Realm_DB_Info['w_db_username'],
 	$Realm_DB_Info['w_db_password'],
-	$Realm_DB_Info['w_db_name']
+	$Realm_DB_Info['w_db_name'],
+	$Realm_DB_Info['w_db_port']
 	);
 
 // Check the CDB status. 0 = cannot connect, 1 = success, 2 = DB doesnt exist
 if($WDB->status() != 1)
 {
-	echo "Cannot connect to the World database. Please make sure you have this realm setup successfully in the Admin Panel. 
+	echo "Cannot connect to the World database. Please make sure you have this realm setup successfully in the Admin Panel.
 	Delete your cookies to reset realm selection back to default";
 	die();
 }
-	
+
 // Free up memory
 unset($Realm_DB_Info);
 
@@ -161,7 +161,7 @@ $Template = new MangosTemplate;
 $Template = $Template->loadTemplateXML();
 if($Template == FALSE)
 {
-	echo "Fetal Error: Template XML Not Found!";
+	echo "Fatal Error: Template XML Not Found!";
 	die();
 }
 
@@ -189,9 +189,9 @@ if($Template == FALSE)
 	{
 		// if empty page, then load default component(frontpage)
 		$ext = (isset($_GET['p']) ? $_GET['p'] : (string)$Config->get('default_component'));
-		
+
 		// If url looks like so: ?p=account/login (This is a avalid url)
-		if(strpos($ext, '/') !== FALSE) 
+		if(strpos($ext, '/') !== FALSE)
 		{
 			list($ext, $sub) = explode('/', $ext);
 		}
@@ -206,9 +206,9 @@ if($Template == FALSE)
 		// === Start Loading of the Page files === //
 
 		// If the requested page is the admin Panel, then we load the admin template
-		if($ext == 'admin') 
+		if($ext == 'admin')
 		{
-			if(file_exists('inc/admin/body_functions.php')) 
+			if(file_exists('inc/admin/body_functions.php'))
 			{
 				include('inc/admin/body_functions.php');
 			}
@@ -219,7 +219,7 @@ if($Template == FALSE)
 			ob_start();
 				include('inc/admin/template_files/admin.' . $sub .'.php');
 			ob_end_flush();
-			
+
 			// Set our time end, so we can see how fast the page loaded.
 			define('TIME_END', microtime(1));
 			define('PAGE_LOAD_TIME', TIME_END - TIME_START);
@@ -229,21 +229,21 @@ if($Template == FALSE)
 		// Else, if requested page isnt the admin panel, then load the template
 		else
 		{
-			
+
 			// Start Loading Of Script Files
 			@include($script_file);
 
 			// If a body functions file exists, include it.
-			if(file_exists($Template['functions'])) 
+			if(file_exists($Template['functions']))
 			{
 				include($Template['functions']);
 			}
 			ob_start();
 				include($Template['header']);
 			ob_end_flush();
-			
+
 			// === Start the loading of the template cache === //
-			
+
 			// Lets check to see if the page is flagged to cache or not. defined in scriptfile of each page
 			if(defined('CACHE_FILE'))
 			{
@@ -253,7 +253,7 @@ if($Template == FALSE)
 			{
 				$CacheFile = FALSE;
 			}
-			
+
 			// Check if admin has enabled caching, and CACHE_FILE is enabled
 			if($Config->get('enable_cache') && $CacheFile == TRUE)
 			{
@@ -279,7 +279,7 @@ if($Template == FALSE)
 					include($template_file);
 				ob_end_flush();
 			}
-			
+
 			// === End cache system, Load the footer === //
 
 			// Set our time end, so we can see how fast the page loaded.
