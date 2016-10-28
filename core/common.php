@@ -58,7 +58,7 @@ $realm_timezone_def = array(
 
 //======= SITE FUNCTIONS =======//
 
-//	************************************************************	
+//	************************************************************
 // Set up out messages like error and success boxes
 
 function output_message($type, $text, $file='', $line='')
@@ -68,7 +68,7 @@ function output_message($type, $text, $file='', $line='')
     echo "<div class=\"".$type."\">".$text."</div>";
 }
 
-//	************************************************************	
+//	************************************************************
 // Custom Error Handler
 
 function customError($errno, $errstr)
@@ -80,7 +80,7 @@ function customError($errno, $errstr)
 
 // ======== Realm Functions ======== //
 
-//	************************************************************	
+//	************************************************************
 // Gets the realmlist from realm DB. Enabled is whether the realm
 // has been enabled for view by users in the ACP.
 
@@ -98,7 +98,43 @@ function getRealmlist($enabled = 1)
 	return $realms;
 }
 
-//	************************************************************	
+function confirmPayment()
+{
+	global $DB, $user, $lang;
+	$pay = $DB->selectRow("SELECT * FROM `mw_donate_transactions` WHERE `account`='".$user['id']."' AND `item_given`='0' LIMIT 1");
+	if($pay == FALSE)
+	{
+		output_message('validation', $lang['donate_no_trans']);
+		echo '<br /><br /><center><b><u>Redirecting...</u></b></center> <meta http-equiv=refresh content="8;url=?p=donate">';
+	}
+	else
+	{
+		if($pay['payment_status'] == 'Completed')
+		{
+			$item = $DB->selectRow("SELECT * FROM `mw_donate_packages` WHERE `id`='".$pay['item_number']."'");
+			if($item['cost'] > $pay['amount'])
+			{
+				output_message('error', $lang['donate_not_face_value']);
+			}
+			else
+			{
+				$DB->query("UPDATE `mw_donate_transactions` SET `item_given`='1' WHERE `account`='".$user['id']."' AND `id`='".$pay['id']."' LIMIT 1");
+				$DB->query("UPDATE `mw_account_extend` SET
+					`web_points` = (`web_points` + ".$item['points']."),
+					`points_earned` = (`points_earned` + ".$item['points']."),
+					`total_donations` = (`total_donations` + ".$pay['amount'].")
+				  WHERE `account_id`='".$user['id']."'");
+				output_message('success', $lang['donate_points_given']);
+			}
+		}
+		else
+		{
+			output_message('warning', $lang['donate_status_not_complete']);
+		}
+	}
+}
+
+//	************************************************************
 // Gets all Columns on the table for the selected realm
 
 function get_realm_byid($id)
@@ -108,8 +144,8 @@ function get_realm_byid($id)
     return $search_q;
 }
 
-//	************************************************************	
-/* 
+//	************************************************************
+/*
 	Used for checking whether a realm is online of not
 	returns TRUE if realm is Online
 	returns FALSE if realm is Offline
@@ -133,11 +169,11 @@ function check_port_status($ip, $port, $timeout)
     }
 }
 
-//	************************************************************	
-// Returns poulation rating of a server. Ex: Low, Medium, High. 
+//	************************************************************
+// Returns poulation rating of a server. Ex: Low, Medium, High.
 // $n = server population
 
-function population_view($n) 
+function population_view($n)
 {
     global $lang;
     $maxlow = 100;
@@ -160,8 +196,8 @@ function population_view($n)
 
 //	************************************************************
 // Gets the fractions to figure how much gold, silver, and copper
-	
-function parse_gold($varnumber) 
+
+function parse_gold($varnumber)
 {
 
 	$gold = array();
@@ -172,39 +208,39 @@ function parse_gold($varnumber)
 	return $gold;
 }
 
-//	************************************************************	
+//	************************************************************
 // Adds the images to the print gold function
 
-function get_print_gold($gold_array) 
+function get_print_gold($gold_array)
 {
-	if($gold_array['gold'] > 0) 
+	if($gold_array['gold'] > 0)
 	{
 		echo $gold_array['gold'];
 		echo "<img src='inc/admin/images/icons/gold.GIF' border='0'>&nbsp;";
 	}
-	if($gold_array['silver'] > 0) 
+	if($gold_array['silver'] > 0)
 	{
 		echo $gold_array['silver'];
 		echo "<img src='inc/admin/images/icons/silver.GIF' border='0'>&nbsp;";
 	}
-	if($gold_array['copper'] > 0) 
+	if($gold_array['copper'] > 0)
 	{
 		echo $gold_array['copper'];
 		echo "<img src='inc/admin/images/icons/copper.GIF' border='0'>&nbsp;";
 	}
 }
 
-//	************************************************************	
+//	************************************************************
 // Main function for actually "printing" the gold
 // Use this function to get the gold print out
 
-function print_gold($gvar) 
+function print_gold($gvar)
 {
-	if($gvar == '---') 
+	if($gvar == '---')
 	{
 		echo $gvar;
 	}
-	else 
+	else
 	{
 		get_print_gold(parse_gold($gvar));
 	}
@@ -213,15 +249,15 @@ function print_gold($gvar)
 //===== MAIL FUNCTIONS =====//
 
 // Send Mail
-function send_email($goingto, $toname, $sbj, $messg) 
+function send_email($goingto, $toname, $sbj, $messg)
 {
 	global $Config;
 	define('DISPLAY_XPM4_ERRORS', true); // display XPM4 errors
 	$core_em = $Config->get('site_email');
-		
+
 	// If email type "0" (SMTP)
-	if($Config->get('email_type') == 0) 
-	{ 
+	if($Config->get('email_type') == 0)
+	{
 		require_once 'core/mail/SMTP.php'; // path to 'SMTP.php' file from XPM4 package
 
 		$f = ''.$core_em.''; // from mail address
@@ -260,18 +296,18 @@ function send_email($goingto, $toname, $sbj, $messg)
 		$m = new MAIL; // initialize MAIL class
 		$m->From($core_em); // set from address
 		$m->AddTo($goingto); // add to address
-		$m->Subject($sbj); // set subject 
+		$m->Subject($sbj); // set subject
 		$m->Html($messg); // set html message
 
 		// connect to MTA server 'smtp.hostname.net' port '25' with authentication: 'username'/'password'
-		if($Config->get('email_use_secure') == 1) 
+		if($Config->get('email_use_secure') == 1)
 		{
-			$c = $m->Connect($Config->get('email_smtp_host'), $Config->get('email_smtp_port'), $Config->get('email_smtp_user'), $Config->get('email_smtp_pass'), $Config->get('email_smtp_secure')) 
+			$c = $m->Connect($Config->get('email_smtp_host'), $Config->get('email_smtp_port'), $Config->get('email_smtp_user'), $Config->get('email_smtp_pass'), $Config->get('email_smtp_secure'))
 				or die(print_r($m->Result));
 		}
 		else
 		{
-			$c = $m->Connect($Config->get('email_smtp_host'), $Config->get('email_smtp_port'), $Config->get('email_smtp_user'), $Config->get('email_smtp_pass')) 
+			$c = $m->Connect($Config->get('email_smtp_host'), $Config->get('email_smtp_port'), $Config->get('email_smtp_user'), $Config->get('email_smtp_pass'))
 				or die(print_r($m->Result));
 		}
 
@@ -283,7 +319,7 @@ function send_email($goingto, $toname, $sbj, $messg)
 	}
 }
 
-//	************************************************************	
+//	************************************************************
 // Loads all the smilies in the smily directory and returns it
 // in an array
 
@@ -294,10 +330,10 @@ function load_smiles($dir='images/smiles/')
     return $smiles;
 }
 
-// ======== Misc functions ======= // 
+// ======== Misc functions ======= //
 
-//	************************************************************	
-/* 
+//	************************************************************
+/*
 	A redirect function.
 	$linkto is the destination
 	$type 0 = <meta>, 1 = header
@@ -319,7 +355,7 @@ function redirect($linkto,$type=0,$wait_sec=0)
     }
 }
 
-//	************************************************************	
+//	************************************************************
 // Does a PHP operator compare ( & ). Example: does 2 fit into
 // 3? 1 + 2 = 3 so yes. How about 8? 1 + 2 + 4 = 7 so NO.
 // The numbers have to double, EX: 1, 2, 4, 8, 16, 32, 64 etc etc.
@@ -336,7 +372,7 @@ function bitCompare($bit, $key)
 	}
 }
 
-//	************************************************************	
+//	************************************************************
 // Builds a cache file name using the template number an language
 
 function cacheString($title)
@@ -345,7 +381,7 @@ function cacheString($title)
 	return $Template['number']. $title . $GLOBALS['user_cur_lang'];
 }
 
-//	************************************************************	
+//	************************************************************
 // Checks a string for illegal symbols
 
 function check_for_symbols($string, $space_check = 0)
@@ -353,7 +389,7 @@ function check_for_symbols($string, $space_check = 0)
     //$space_check=1 means space is not allowed
     $len=strlen($string);
     $allowed_chars="abcdefghijklmnopqrstuvwxyzæøåABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ0123456789";
-    if(!$space_check) 
+    if(!$space_check)
 	{
         $allowed_chars .= " ";
     }
@@ -363,19 +399,19 @@ function check_for_symbols($string, $space_check = 0)
     return FALSE;
 }
 
-//	************************************************************	
+//	************************************************************
 // a basic stripslashes function using get if magic quotes
 
 function strip_if_magic_quotes($value)
 {
-    if (get_magic_quotes_gpc()) 
+    if (get_magic_quotes_gpc())
 	{
         $value = stripslashes($value);
     }
     return $value;
 }
 
-//	************************************************************	
+//	************************************************************
 // Replaces the first letter of the text with an image letter
 
 function add_pictureletter($text)
@@ -393,7 +429,7 @@ function add_pictureletter($text)
     return $output;
 }
 
-//	************************************************************	
+//	************************************************************
 // Used to generate a random password for the password revocery script.
 
 function random_string($counts)
@@ -401,7 +437,7 @@ function random_string($counts)
     $str = "abcdefghijklmnopqrstuvwxyz"; //Count 0-25
     $o = 0;
 	$output = '';
-	
+
     for($i=0; $i < $counts; $i++)
 	{
         if($o == 1)
@@ -420,10 +456,10 @@ function random_string($counts)
 
 // ========== BB code -> HTML / HTML -> BBcode functions =========== //
 
-//	************************************************************	
+//	************************************************************
 // my_preview switches from BBcode to HTML
 
-function my_preview($text,$userlevel=0) 
+function my_preview($text,$userlevel=0)
 {
     if($userlevel < 1)
 	{
@@ -458,7 +494,7 @@ function my_preview($text,$userlevel=0)
     return $text;
 }
 
-//	************************************************************	
+//	************************************************************
 // my_previewreverse switches from HTML to BBcode
 
 function my_previewreverse($text)
@@ -487,10 +523,10 @@ function my_previewreverse($text)
     return $text;
 }
 
-//	************************************************************	
+//	************************************************************
 // Makes a MangosWeb URL
 
-function mw_url($page, $subpage = NULL, $params = NULL, $encodeentities = TRUE) 
+function mw_url($page, $subpage = NULL, $params = NULL, $encodeentities = TRUE)
 {
 	global $Config;
 	if($subpage != NULL)
@@ -508,14 +544,28 @@ function mw_url($page, $subpage = NULL, $params = NULL, $encodeentities = TRUE)
 			$url = "?p=$page";
 		}
 	}
-    if(is_array($params)) 
+    if(is_array($params))
 	{
-        foreach($params as $key=>$value) 
+        foreach($params as $key=>$value)
 		{
             $url .= "&$key=$value";
         }
     }
     return $encodeentities ? htmlentities($url) : $url;
+}
+
+// mysqli replacement for mysql_result
+
+function mysqli_result($res,$row=0,$col=0){
+		$numrows = mysqli_num_rows($res);
+		if ($numrows && $row <= ($numrows-1) && $row >=0){
+			mysqli_data_seek($res,$row);
+			$resrow = (is_numeric($col)) ? mysqli_fetch_row($res) : mysqli_fetch_assoc($res);
+			if (isset($resrow[$col])){
+				return $resrow[$col];
+			}
+		}
+		return false;
 }
 
 //	************************************************************
@@ -548,15 +598,15 @@ function paginate($num_pages, $cur_page, $link_to)
         }
         for($current = $cur_page - 2, $stop = $cur_page + 3; $current < $stop; $current++)
         {
-            if($current < 1 || $current > $num_pages) 
+            if($current < 1 || $current > $num_pages)
 			{
                 continue;
-            } 
-			elseif($current != $cur_page || $link_to_all) 
+            }
+			elseif($current != $cur_page || $link_to_all)
 			{
                 $pages[$current] = "<a href='$link_to&page=$current'>$current</a>";
-            } 
-			else 
+            }
+			else
 			{
                 $pages[$current] = '['.$current.']';
             }
